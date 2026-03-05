@@ -156,7 +156,7 @@ packages:
   design_system:
     dependency: "direct main"
     description:
-      path: "../mobile-platform/packages/flutter/design_system"
+      path: "../mobile-apps/mobile-apps/mobile-platform/packages/flutter/design_system"
       relative: true
     source: path
     version: "0.0.1"

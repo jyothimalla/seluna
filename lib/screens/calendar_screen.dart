@@ -6,6 +6,7 @@ import 'package:design_system/design_system.dart';
 import '../models/period.dart';
 import '../services/providers.dart';
 import 'profile_screen.dart' show buildProfileAvatar, ProfileScreen;
+import 'chatbot_screen.dart';
 
 // ── Soft rose palette ─────────────────────────────────────────────────────────
 // Classic feminine rose: deep rose → medium rose → soft blush
@@ -174,34 +175,64 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    // Right: avatar + status badge
+                    // Right: FAQ + avatar + status badge
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        GestureDetector(
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (_) => const ProfileScreen()),
-                          ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border:
-                                  Border.all(color: Colors.white, width: 2.5),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withAlpha(40),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // FAQ / chatbot button
+                            GestureDetector(
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                    builder: (_) => const ChatbotScreen()),
+                              ),
+                              child: Container(
+                                width: 42,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withAlpha(25),
+                                  border: Border.all(
+                                      color: Colors.white.withAlpha(100),
+                                      width: 1.5),
                                 ),
-                              ],
+                                child: const Icon(
+                                  Icons.help_outline_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
                             ),
-                            child: buildProfileAvatar(
-                              photoPath: profile.photoPath,
-                              avatarIndex: profile.avatarIndex,
-                              radius: 28,
+                            const SizedBox(width: 8),
+                            // Profile avatar
+                            GestureDetector(
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                    builder: (_) => const ProfileScreen()),
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                      color: Colors.white, width: 2.5),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha(40),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: buildProfileAvatar(
+                                  photoPath: profile.photoPath,
+                                  avatarIndex: profile.avatarIndex,
+                                  radius: 28,
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                         const SizedBox(height: 8),
                         if (hasOngoing)
@@ -969,42 +1000,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return LayoutBuilder(builder: (context, constraints) {
       final totalWidth = constraints.maxWidth;
       final dayWidth = totalWidth / cycleLen;
+      // Zone: expected period length (lighter)
       final periodWidth = (periodLen * dayWidth).clamp(0.0, totalWidth);
-      final markerX = ((dayNum - 1) * dayWidth).clamp(0.0, totalWidth - 4);
+      // Progress: actual days so far today (bright)
+      final progressWidth = (dayNum * dayWidth).clamp(0.0, totalWidth);
+      // Marker line at today's position
+      final markerX = ((dayNum - 1) * dayWidth).clamp(0.0, totalWidth - 3);
 
       return SizedBox(
-        height: 16,
+        height: 10,
         child: Stack(
           children: [
-            // Background track (full cycle)
+            // Background track (full cycle) — faintest
             Positioned.fill(
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Container(color: Colors.white.withAlpha(40)),
+                borderRadius: BorderRadius.circular(5),
+                child: Container(color: Colors.white.withAlpha(25)),
               ),
             ),
-            // Period phase (dark fill)
+            // Period zone (first periodLen days) — medium
             Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: periodWidth,
+              left: 0, top: 0, bottom: 0, width: periodWidth,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(200),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
+                borderRadius: BorderRadius.circular(5),
+                child: Container(color: Colors.white.withAlpha(70)),
+              ),
+            ),
+            // Today's progress (Day 1 → dayNum) — brightest
+            Positioned(
+              left: 0, top: 0, bottom: 0, width: progressWidth,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(5),
+                child: Container(color: Colors.white.withAlpha(220)),
               ),
             ),
             // Today marker
             Positioned(
-              left: markerX,
-              top: 0,
-              bottom: 0,
-              width: 4,
+              left: markerX, top: 0, bottom: 0, width: 3,
               child: Container(
                 decoration: BoxDecoration(
                   color: _kHibiscusDeep,
@@ -1355,25 +1387,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _predictedCell(BuildContext context, DateTime day,
       {bool isToday = false}) {
     return Center(
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: _kPeriodPink.withAlpha(30),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: _kPeriodPink,
-            width: isToday ? 2.5 : 1.5,
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          '${day.day}',
-          style: TextStyle(
-            color: _kHibiscusMid,
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-          ),
+      child: SizedBox(
+        width: 34,
+        height: 40,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Icon(
+              Icons.water_drop,
+              color: isToday
+                  ? _kHibiscusMid
+                  : _kPeriodPink.withAlpha(isToday ? 255 : 150),
+              size: 36,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: Text(
+                '${day.day}',
+                style: TextStyle(
+                  color: isToday ? Colors.white : _kHibiscusMid,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

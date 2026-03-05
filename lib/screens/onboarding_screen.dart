@@ -130,9 +130,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
       // 3. Seed historical periods if provided
       if (_lastPeriodStart != null) {
+        final today = DateTime.now();
+        final rawEnd = _lastPeriodStart!.add(Duration(days: _periodLength - 1));
+        final cappedEnd = rawEnd.isAfter(today) ? today : rawEnd;
         final DateTime? effectiveEnd = _periodIsOngoing == true
             ? null
-            : _lastPeriodEnd ?? _lastPeriodStart!.add(Duration(days: _periodLength - 1));
+            : _lastPeriodEnd ?? cappedEnd;
         final seed = DateTime(_lastPeriodStart!.year, _lastPeriodStart!.month, _lastPeriodStart!.day);
         final cyclesBack = (183 / _cycleLength).ceil();
         final batch = db.batch();
@@ -382,112 +385,165 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildRegisterStep(KiwiNovasColors colors) {
+    const deep = Color(0xFF880E4F);
+    const mid = Color(0xFFE91E63);
+    const light = Color(0xFFF48FB1);
     const bg = Color(0xFFFCE4EC);
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(Icons.lock_outline_rounded, size: 64, color: colors.primary),
-          const SizedBox(height: 20),
-          Text('Create your account',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: colors.onSurface, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center),
-          const SizedBox(height: 8),
-          Text('Your data is private and securely stored.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colors.placeholder),
-              textAlign: TextAlign.center),
-          const SizedBox(height: 32),
-
-          // Email
-          TextField(
-            controller: _emailCtrl,
-            keyboardType: TextInputType.emailAddress,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              labelText: 'Email',
-              prefixIcon: const Icon(Icons.email_outlined, color: _pink, size: 20),
-              filled: true, fillColor: bg,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _pink, width: 1.5)),
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // Password
-          TextField(
-            controller: _passCtrl,
-            obscureText: _obscurePass,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              labelText: 'Password',
-              helperText: 'At least 6 characters',
-              prefixIcon: const Icon(Icons.lock_outline, color: _pink, size: 20),
-              suffixIcon: IconButton(
-                icon: Icon(_obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: _pink, size: 20),
-                onPressed: () => setState(() => _obscurePass = !_obscurePass),
+          // ── Gradient hero header ────────────────────────────────────────────
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [deep, mid, light],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              filled: true, fillColor: bg,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _pink, width: 1.5)),
             ),
-          ),
-          const SizedBox(height: 14),
-
-          // Confirm password
-          TextField(
-            controller: _confirmPassCtrl,
-            obscureText: _obscureConfirm,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              labelText: 'Confirm Password',
-              prefixIcon: const Icon(Icons.lock_outline, color: _pink, size: 20),
-              suffixIcon: IconButton(
-                icon: Icon(_obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: _pink, size: 20),
-                onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
-              ),
-              errorText: _confirmPassCtrl.text.isNotEmpty && _confirmPassCtrl.text != _passCtrl.text ? 'Passwords do not match' : null,
-              filled: true, fillColor: bg,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _pink, width: 1.5)),
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 36),
+            child: Column(
+              children: [
+                Container(
+                  width: 72, height: 72,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(30),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withAlpha(100), width: 2),
+                  ),
+                  child: ClipOval(
+                    child: Image.asset('assets/hibiscus.png', fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            const Icon(Icons.local_florist, color: Colors.white, size: 36)),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'Create Account',
+                  style: TextStyle(color: Colors.white, fontSize: 24,
+                      fontWeight: FontWeight.w800, letterSpacing: -0.3),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Your data is private & securely stored.',
+                  style: TextStyle(color: Colors.white.withAlpha(190), fontSize: 13),
+                ),
+              ],
             ),
           ),
 
-          if (_regError != null) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.red.shade200),
-              ),
-              child: Column(
-                children: [
-                  Text(_regError!, style: TextStyle(color: Colors.red.shade700, fontSize: 13), textAlign: TextAlign.center),
-                  if (_regError!.contains('email-already-in-use') || _regError!.contains('already exists')) ...[
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.login_rounded, size: 18),
-                        label: const Text('Log In Instead'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _pink,
-                          side: const BorderSide(color: _pink),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const AuthScreen()),
-                        ),
-                      ),
+          // ── Form card ───────────────────────────────────────────────────────
+          Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            transform: Matrix4.translationValues(0, -20, 0),
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Email
+                TextField(
+                  controller: _emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    labelText: 'Email address',
+                    prefixIcon: const Icon(Icons.email_outlined, color: mid, size: 20),
+                    filled: true, fillColor: bg,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: mid, width: 1.5)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Password
+                TextField(
+                  controller: _passCtrl,
+                  obscureText: _obscurePass,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    helperText: 'At least 6 characters',
+                    prefixIcon: const Icon(Icons.lock_outline, color: mid, size: 20),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: mid, size: 20),
+                      onPressed: () => setState(() => _obscurePass = !_obscurePass),
                     ),
-                  ],
+                    filled: true, fillColor: bg,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: mid, width: 1.5)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Confirm password
+                TextField(
+                  controller: _confirmPassCtrl,
+                  obscureText: _obscureConfirm,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    labelText: 'Confirm Password',
+                    prefixIcon: const Icon(Icons.lock_outline, color: mid, size: 20),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: mid, size: 20),
+                      onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                    ),
+                    errorText: _confirmPassCtrl.text.isNotEmpty && _confirmPassCtrl.text != _passCtrl.text ? 'Passwords do not match' : null,
+                    filled: true, fillColor: bg,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: mid, width: 1.5)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                ),
+
+                if (_regError != null) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(_regError!,
+                            style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                            textAlign: TextAlign.center),
+                        if (_regError!.contains('email-already-in-use') ||
+                            _regError!.contains('already exists')) ...[
+                          const SizedBox(height: 10),
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.login_rounded, size: 16),
+                            label: const Text('Log In Instead',
+                                style: TextStyle(fontWeight: FontWeight.w700)),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: mid,
+                              side: BorderSide(color: mid, width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20)),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                            ),
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const AuthScreen()),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ],
-              ),
+                const SizedBox(height: 4),
+              ],
             ),
-          ],
+          ),
         ],
       ),
     );

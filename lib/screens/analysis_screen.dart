@@ -1,8 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:design_system/design_system.dart';
 import '../models/period.dart';
 import '../services/providers.dart';
+import '../widgets/cycle_ring.dart';
 
 /// Combined History & Insights screen — period log list with edit/delete
 /// (E1) at the top, followed by cycle analysis stats (E4).
@@ -19,6 +21,15 @@ class AnalysisScreen extends ConsumerWidget {
     final lastCycle = ref.watch(lastCycleLengthProvider);
     final isRegular = ref.watch(isRegularCycleProvider);
 
+    // Compute cycle ring data (reuse `service` already declared above)
+    final profile = service.profile;
+    final periodsForRing = service.periods;
+    int cycleDay = 1;
+    if (periodsForRing.isNotEmpty) {
+      cycleDay = DateTime.now().difference(periodsForRing.last.startDate).inDays + 1;
+      cycleDay = cycleDay.clamp(1, profile.cycleLength);
+    }
+
     return KiwiNovasScaffold(
       appBar: KiwiNovasAppBar(title: const Text('History & Insights')),
       body: periods.isEmpty
@@ -29,6 +40,26 @@ class AnalysisScreen extends ConsumerWidget {
             )
           : CustomScrollView(
               slivers: [
+                // ── Cycle Ring ────────────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Container(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF1A0508)
+                        : const Color(0xFFFCE4EC),
+                    padding: const EdgeInsets.symmetric(vertical: 28),
+                    child: Center(
+                      child: CycleRingWidget(
+                        cycleDay: cycleDay,
+                        cycleLength: profile.cycleLength,
+                        periodLength: profile.periodLength,
+                        nextPeriodDate: service.nextPredictedDate,
+                        today: DateTime.now(),
+                        isOngoingPeriod: service.ongoingPeriod != null,
+                      ),
+                    ),
+                  ),
+                ),
+
                 // ── Cycle Insights ───────────────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(

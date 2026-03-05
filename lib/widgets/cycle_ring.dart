@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 /// Flo-style cycle ring widget showing period/fertile phases and current
 /// position in the cycle via a CustomPainter arc track.
@@ -46,17 +47,20 @@ class CycleRingWidget extends StatelessWidget {
     return _deep;
   }
 
-  String get _countdownText {
-    if (nextPeriodDate == null) return 'Log 2+ periods to predict';
+  String get _countdownHeadline {
+    if (isOngoingPeriod || cycleDay <= periodLength) {
+      return 'Period\nday $cycleDay';
+    }
+    if (nextPeriodDate == null) return 'Log more\nperiods';
     final diff = nextPeriodDate!
         .difference(DateTime(today.year, today.month, today.day))
         .inDays;
-    if (diff < -1) return '${diff.abs()} days late';
-    if (diff == -1) return 'Period was yesterday';
-    if (diff == 0) return 'Period expected today';
-    if (diff == 1) return 'Period tomorrow';
-    return '$diff days until period';
+    if (diff < 0) return '${diff.abs()} days\nlate';
+    if (diff == 0) return 'Period\nexpected today!';
+    if (diff == 1) return 'Period\ntomorrow!';
+    return '$diff days until\nyour next period';
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -79,34 +83,37 @@ class CycleRingWidget extends StatelessWidget {
                   periodLength: periodLength,
                 ),
               ),
-              // Center content
+              // Center content — Flo-style
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Date line
                   Text(
-                    'Day $cycleDay',
-                    style: const TextStyle(
-                      fontSize: 38,
-                      fontWeight: FontWeight.w900,
-                      color: _deep,
-                      height: 1.0,
+                    DateFormat('EEE, MMM d').format(today),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
+                  // Big countdown headline
                   Text(
-                    'of $cycleLength',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade500,
-                      fontWeight: FontWeight.w500,
+                    _countdownHeadline,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                      color: _deep,
+                      height: 1.25,
                     ),
                   ),
                   const SizedBox(height: 10),
+                  // Phase badge
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _phaseColor.withAlpha(25),
+                      color: _phaseColor.withAlpha(22),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -119,23 +126,14 @@ class CycleRingWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  Container(
-                    constraints: const BoxConstraints(maxWidth: 140),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _bg,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      _countdownText,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: _deep,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
+                  const SizedBox(height: 6),
+                  // Cycle day indicator
+                  Text(
+                    'Day $cycleDay of $cycleLength',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade400,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
