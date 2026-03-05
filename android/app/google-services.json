@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1084947863540",
+    "project_id": "periodtracker-2b90f",
+    "storage_bucket": "periodtracker-2b90f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1084947863540:android:0c160ef4edecd9391d8ba1",
+        "android_client_info": {
+          "package_name": "com.kiwinovas.periodtracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1084947863540-9steechi4beii1cmobko3jqukctmbs1l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kiwinovas.periodtracker",
+            "certificate_hash": "410b1d6ce416d3a4433c4d9b56a4839d332adecc"
+          }
+        },
+        {
+          "client_id": "1084947863540-008heg1os1f9hql688i4pahg078449jb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDqDOwWuWSVbKyBLNZoOFCLEJ0D0i9_vwM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1084947863540-008heg1os1f9hql688i4pahg078449jb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
